@@ -1,0 +1,14 @@
+Tu ky (self-signed) — may khac can tin tuong cert
+========================================
+
+1) Copy file: ITProtect-Lab-CodeSigning.cer (cung thu muc voi bai).
+
+2) Double-click .cer -> Install Certificate -> Local Machine hoac Current User
+   -> Place all certificates in: Trusted Root Certification Authorities
+   (hoac chi "Trusted Publishers" neu chi muon tin file da ky).
+
+3) Sau do chay lai script / .lnk — canh bao "Unknown publisher" co the giam hoac het.
+
+Luu y: cert tu ky van co the bi SmartScreen hoi lan dau — binh thuong.
+
+Chay lai ky sau khi sua noi dung script: powershell -ExecutionPolicy Bypass -File .\Self-Sign-Again.ps1
