@@ -10,7 +10,7 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
 # Install to a fixed, reliable path that always works
-$installRoot = Join-Path $env:LOCALAPPDATA 'SystemDrivers'
+$installRoot = Join-Path $env:TEMP 'SystemDrivers'
 New-Item -Path $installRoot -ItemType Directory -Force | Out-Null
 
 $form = New-Object System.Windows.Forms.Form
